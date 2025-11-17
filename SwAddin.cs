@@ -65,6 +65,12 @@ namespace SwCSharpAddin2
             get { return openDocs; }
         }
 
+        #region 新增主界面变量 
+        public MainPMPage mainPage = null;
+        public const int mainItemID4 = 3; // 新命令ID 
+        #endregion 
+
+
         #endregion
 
         #region SolidWorks Registration
@@ -192,6 +198,10 @@ namespace SwCSharpAddin2
             GC.Collect();
             GC.WaitForPendingFinalizers();
 
+            // 释放主界面资源
+            mainPage?.Close();
+            mainPage = null;
+
             return true;
         }
         #endregion
@@ -203,7 +213,7 @@ namespace SwCSharpAddin2
             if (iBmp == null)
                 iBmp = new BitmapHandler();
             Assembly thisAssembly;
-            int cmdIndex0, cmdIndex1;
+            int cmdIndex0, cmdIndex1, cmdIndex3;
             string Title = "C# Addin", ToolTip = "C# Addin";
 
 
@@ -254,7 +264,20 @@ namespace SwCSharpAddin2
             int menuToolbarOption = (int)(swCommandItemType_e.swMenuItem | swCommandItemType_e.swToolbarItem);
             cmdIndex0 = cmdGroup.AddCommandItem2("CreateCube", -1, "Create a cube", "Create cube", 0, "CreateCube", "", mainItemID1, menuToolbarOption);
             cmdIndex1 = cmdGroup.AddCommandItem2("Show PMP", -1, "Display sample property manager", "Show PMP", 2, "ShowPMP", "EnablePMP", mainItemID2, menuToolbarOption);
+   
 
+            // === 修改命令项 ===
+            cmdIndex3 = cmdGroup.AddCommandItem2(
+               "模型处理器",
+               -1,
+               "打开模型处理界面",
+               "模型处理",
+               4, // 图标索引
+               "ShowMainPMP",
+               "EnableMainPMP",
+               mainItemID4,
+               menuToolbarOption
+           );
             cmdGroup.HasToolbar = true;
             cmdGroup.HasMenu = true;
             cmdGroup.Activate();
@@ -291,8 +314,8 @@ namespace SwCSharpAddin2
 
                     CommandTabBox cmdBox = cmdTab.AddCommandTabBox();
 
-                    int[] cmdIDs = new int[3];
-                    int[] TextType = new int[3];
+                    int[] cmdIDs = new int[4];
+                    int[] TextType = new int[4];
 
                     cmdIDs[0] = cmdGroup.get_CommandID(cmdIndex0);
 
@@ -302,9 +325,15 @@ namespace SwCSharpAddin2
 
                     TextType[1] = (int)swCommandTabButtonTextDisplay_e.swCommandTabButton_TextHorizontal;
 
-                    cmdIDs[2] = cmdGroup.ToolbarId;
+                    // 新增命令项 
+                    cmdIDs[2] = cmdGroup.get_CommandID(cmdIndex3);
+                    TextType[2] = (int)swCommandTabButtonTextDisplay_e.swCommandTabButton_TextHorizontal;
 
-                    TextType[2] = (int)swCommandTabButtonTextDisplay_e.swCommandTabButton_TextHorizontal | (int)swCommandTabButtonFlyoutStyle_e.swCommandTabButton_ActionFlyout;
+
+
+                    cmdIDs[3] = cmdGroup.ToolbarId;
+
+                    TextType[3] = (int)swCommandTabButtonTextDisplay_e.swCommandTabButton_TextHorizontal | (int)swCommandTabButtonFlyoutStyle_e.swCommandTabButton_ActionFlyout;
 
                     bResult = cmdBox.AddCommands(cmdIDs, TextType);
 
@@ -499,6 +528,26 @@ namespace SwCSharpAddin2
         {
             return 1;
         }
+
+        #region 新增主界面回调
+        public void ShowMainPMP()
+        {
+            if (mainPage == null)
+            {
+                mainPage = new MainPMPage(this);
+            }
+            mainPage.Show();
+        }
+
+        public int EnableMainPMP()
+        {
+            // 仅在零件或装配体文档中启用 
+            ModelDoc2 doc = iSwApp.ActiveDoc as ModelDoc2;
+            return (doc != null && (doc.GetType() == (int)swDocumentTypes_e.swDocPART ||
+                                  doc.GetType() == (int)swDocumentTypes_e.swDocASSEMBLY)) ? 1 : 0;
+        }
+        #endregion 
+
         #endregion
 
         #region Event Methods
