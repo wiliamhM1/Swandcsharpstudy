@@ -1,0 +1,2 @@
+D:\SwDev\SwCSharpAddin2\obj\Debug\SwCSharpAddin2.csproj.AssemblyReference.cache
+D:\SwDev\SwCSharpAddin2\obj\Debug\SwCSharpAddin2.csproj.CoreCompileInputs.cache
